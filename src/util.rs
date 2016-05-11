@@ -18,6 +18,14 @@ macro_rules! rand {
     };
 }
 
+pub fn xor(a: &[u8], b: &[u8]) -> Vec<u8> {
+    debug_assert_eq!(a.len(), b.len());
+    a.iter()
+        .zip(b)
+        .map(|(x, y)| x ^ y)
+        .collect()
+}
+
 pub fn oracle(message: &[u8], len: usize) -> Vec<u8> {
     let mut output = vec![0; message.len()];
     let key = rand!(len);
@@ -28,7 +36,12 @@ pub fn oracle(message: &[u8], len: usize) -> Vec<u8> {
     output
 }
 
-pub fn exhaustion(ciphertext: &[u8], plaintext: &[u8], len: usize) -> Vec<u8> {
+#[derive(Debug, PartialEq)]
+pub enum GuessFail {
+    LenError
+}
+
+pub fn exhaustion(ciphertext: &[u8], plaintext: &[u8], len: usize) -> Result<Vec<u8>, GuessFail> {
     let try_pass = move |key: &[u8]| {
         let mut output = vec![0; ciphertext.len()];
         let mut cipher = Blowfish::init_state();
@@ -43,11 +56,14 @@ pub fn exhaustion(ciphertext: &[u8], plaintext: &[u8], len: usize) -> Vec<u8> {
     };
 
     let mut key = vec![0; len];
+    let start = key.clone();
     loop {
-        match try_pass(&key) {
-            Some(output) => return output,
-            None => add_ctr(&mut key, 1)
-        }
+        if let Some(output) = try_pass(&key) {
+            return Ok(output);
+        } else {
+            add_ctr(&mut key, 1);
+            if key == start { Err(GuessFail::LenError)? };
+        };
     }
 }
 
@@ -69,5 +85,5 @@ fn test_exhaustion_oracle() {
     let ciphertext = oracle(&plaintext, 2);
     let guesstext = exhaustion(&ciphertext, &plaintext[0..8], 2);
 
-    assert_eq!(guesstext, plaintext);
+    assert_eq!(guesstext, Ok(plaintext));
 }
