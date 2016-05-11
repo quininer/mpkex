@@ -14,8 +14,8 @@ pub use util::GuessFail;
 #[derive(Clone, Copy, Debug)]
 pub struct Config(pub usize, pub usize);
 
-pub const CONFIG: Config = Config(1048576, 4);
-const HEAD: &'static [u8] = &[b'w' ;8];
+pub const CONFIG: Config = Config(1048576, 3);
+const HEAD: &'static [u8] = &[b'w'; 8];
 
 
 /// ```
@@ -27,6 +27,7 @@ const HEAD: &'static [u8] = &[b'w' ;8];
 /// let alice_secret = alice.exchange_from(&c).unwrap();
 /// assert_eq!(alice_secret, bob_secret);
 /// ```
+#[derive(Clone, Debug)]
 pub struct MpKex {
     map: Option<HashMap<Vec<u8>, Vec<u8>>>,
     len: usize

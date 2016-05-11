@@ -67,6 +67,7 @@ pub fn exhaustion(ciphertext: &[u8], plaintext: &[u8], len: usize) -> Result<Vec
     }
 }
 
+// from rust-crypto
 fn add_ctr(ctr: &mut [u8], mut ammount: u8) {
     for i in ctr.iter_mut().rev() {
         let prev = *i;
