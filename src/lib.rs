@@ -19,9 +19,9 @@ const HEAD: &'static [u8] = &[b'w'; 8];
 
 
 /// ```
-/// use mpkex::{ MpKex, Config };
-/// let alice = MpKex::new(Config(100, 2));
-/// let bob = MpKex::new_empty(Config(100, 2));
+/// use mpkex::{ MpKex, CONFIG };
+/// let alice = MpKex::new(CONFIG);
+/// let bob = MpKex::new_empty(CONFIG);
 ///
 /// let (c, bob_secret) = bob.exchange(&alice.public().unwrap()).unwrap();
 /// let alice_secret = alice.exchange_from(&c).unwrap();

@@ -28,7 +28,9 @@ pub fn xor(a: &[u8], b: &[u8]) -> Vec<u8> {
 
 pub fn oracle(message: &[u8], len: usize) -> Vec<u8> {
     let mut output = vec![0; message.len()];
-    let key = rand!(len);
+    let mut key = rand!(len);
+    let i = key.len() - 1;
+    key[i] &= 128;
     let mut cipher = Blowfish::init_state();
     cipher.expand_key(&key);
     CtrMode::new(cipher, vec![0; 8])
@@ -56,20 +58,25 @@ pub fn exhaustion(ciphertext: &[u8], plaintext: &[u8], len: usize) -> Result<Vec
     };
 
     let mut key = vec![0; len];
+    let i = key.len() - 1;
     let start = key.clone();
     loop {
-        if let Some(output) = try_pass(&key) {
-            return Ok(output);
+        if key[i] <= 128 {
+            if let Some(output) = try_pass(&key) {
+                return Ok(output);
+            } else {
+                add_ctr(&mut key, 1);
+            }
         } else {
-            add_ctr(&mut key, 1);
-            if key == start { Err(GuessFail::LenError)? };
-        };
+            add_ctr(&mut key, 127);
+        }
+        if key == start { Err(GuessFail::LenError)? };
     }
 }
 
 // from rust-crypto
 fn add_ctr(ctr: &mut [u8], mut ammount: u8) {
-    for i in ctr.iter_mut().rev() {
+    for i in ctr.iter_mut() {
         let prev = *i;
         *i = i.wrapping_add(ammount);
         if *i >= prev {
