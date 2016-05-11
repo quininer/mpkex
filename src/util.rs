@@ -30,7 +30,7 @@ pub fn oracle(message: &[u8], len: usize) -> Vec<u8> {
     let mut output = vec![0; message.len()];
     let mut key = rand!(len);
     let i = key.len() - 1;
-    key[i] &= 128;
+    key[i] %= 128;
     let mut cipher = Blowfish::init_state();
     cipher.expand_key(&key);
     CtrMode::new(cipher, vec![0; 8])
@@ -45,12 +45,18 @@ pub enum GuessFail {
 
 pub fn exhaustion(ciphertext: &[u8], plaintext: &[u8], len: usize) -> Result<Vec<u8>, GuessFail> {
     let try_pass = move |key: &[u8]| {
-        let mut output = vec![0; ciphertext.len()];
+        let starttext = &ciphertext[..8];
+        let mut output = vec![0; starttext.len()];
         let mut cipher = Blowfish::init_state();
         cipher.expand_key(key);
         CtrMode::new(cipher, vec![0; 8])
-            .process(&ciphertext, &mut output);
-        if output.starts_with(plaintext) {
+            .process(&starttext, &mut output);
+        if output == plaintext {
+            let mut cipher = Blowfish::init_state();
+            let mut output = vec![0; ciphertext.len()];
+            cipher.expand_key(key);
+            CtrMode::new(cipher, vec![0; 8])
+                .process(&ciphertext, &mut output);
             Some(output)
         } else {
             None
@@ -61,14 +67,14 @@ pub fn exhaustion(ciphertext: &[u8], plaintext: &[u8], len: usize) -> Result<Vec
     let i = key.len() - 1;
     let start = key.clone();
     loop {
-        if key[i] <= 128 {
+        if key[i] < 128 {
             if let Some(output) = try_pass(&key) {
                 return Ok(output);
             } else {
                 add_ctr(&mut key, 1);
             }
         } else {
-            add_ctr(&mut key, 127);
+            add_ctr(&mut key, 128);
         }
         if key == start { Err(GuessFail::LenError)? };
     }
