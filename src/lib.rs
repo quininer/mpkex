@@ -76,7 +76,6 @@ impl MpKex {
     pub fn exchange_from(&self, data: &[u8]) -> Option<Vec<u8>> {
         let (c, k) = data.split_at(8);
         self.map.clone()
-            .and_then(|m| m.get(c).cloned())
-            .map(|r| xor(&r, k))
+            .and_then(|m| m.get(c).map(|r| xor(&r, k)))
     }
 }
