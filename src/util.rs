@@ -34,7 +34,7 @@ pub fn oracle(message: &[u8], len: usize) -> Vec<u8> {
     let mut cipher = Blowfish::init_state();
     cipher.expand_key(&key);
     CtrMode::new(cipher, vec![0; 8])
-        .process(&message, &mut output);
+        .process(message, &mut output);
     output
 }
 
@@ -50,13 +50,13 @@ pub fn exhaustion(ciphertext: &[u8], plaintext: &[u8], len: usize) -> Result<Vec
         let mut cipher = Blowfish::init_state();
         cipher.expand_key(key);
         CtrMode::new(cipher, vec![0; 8])
-            .process(&starttext, &mut output);
+            .process(starttext, &mut output);
         if output == plaintext {
             let mut cipher = Blowfish::init_state();
             let mut output = vec![0; ciphertext.len()];
             cipher.expand_key(key);
             CtrMode::new(cipher, vec![0; 8])
-                .process(&ciphertext, &mut output);
+                .process(ciphertext, &mut output);
             Some(output)
         } else {
             None
